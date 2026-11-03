@@ -7,6 +7,10 @@ import {
     RiskLevel,
     displayNameByRiskLevel,
 } from "@draftgap/core/src/risk/risk-level";
+import {
+    BlindPickCaution,
+    displayNameByBlindPickCaution,
+} from "@draftgap/core/src/risk/blind-pick-caution";
 import { useUser } from "../../contexts/UserContext";
 import { useMedia } from "../../hooks/useMedia";
 import {
@@ -32,6 +36,12 @@ export default function SettingsDialog() {
             label: displayNameByRiskLevel[level],
         }),
     );
+
+    const blindPickCautionOptions: ButtonGroupOption<BlindPickCaution>[] =
+        BlindPickCaution.map((caution) => ({
+            value: caution,
+            label: displayNameByBlindPickCaution[caution],
+        }));
 
     const draftTablePlacementOptions = [
         {
@@ -106,6 +116,40 @@ export default function SettingsDialog() {
                         })
                     }
                 />
+                <div class="flex flex-col gap-1 mt-2">
+                    <span class="text-lg uppercase">Blind-pick caution</span>
+                    <span class="text-sm text-neutral-400">
+                        How strongly the Blind column penalizes champions whose
+                        matchups swing a lot against enemies not yet picked.
+                    </span>
+                    <ButtonGroup
+                        options={blindPickCautionOptions}
+                        selected={config.blindPickCaution}
+                        size="sm"
+                        onChange={(value: BlindPickCaution) =>
+                            setConfig({
+                                blindPickCaution: value,
+                            })
+                        }
+                    />
+                </div>
+                <div class="flex space-x-8 items-center justify-between mt-2">
+                    <div class="flex flex-col">
+                        <span class="text-lg uppercase">Pool-only mode</span>
+                        <span class="text-sm text-neutral-400">
+                            Only suggest your favourite champions for your team.
+                            Click the star above the table to show everyone.
+                        </span>
+                    </div>
+                    <Switch
+                        checked={config.poolOnlyMode}
+                        onChange={() =>
+                            setConfig({
+                                poolOnlyMode: !config.poolOnlyMode,
+                            })
+                        }
+                    />
+                </div>
             </div>
             <div>
                 <h3 class="text-3xl uppercase">UI</h3>

@@ -13,7 +13,14 @@ import { Suggestion } from "@draftgap/core/src/draft/suggestions";
 import { Table } from "../common/Table";
 import ChampionCell from "../common/ChampionCell";
 import { RoleCell } from "../common/RoleCell";
-import { batch, createSignal, onCleanup, onMount, Show } from "solid-js";
+import {
+    batch,
+    createEffect,
+    createSignal,
+    onCleanup,
+    onMount,
+    Show,
+} from "solid-js";
 import { Icon } from "solid-heroicons";
 import { star } from "solid-heroicons/solid";
 import { star as starOutline } from "solid-heroicons/outline";
@@ -28,6 +35,31 @@ import { Dialog } from "../common/Dialog";
 import { ChampionDraftAnalysisDialog } from "../dialogs/ChampionDraftAnalysisDialog";
 import { Team } from "@draftgap/core/src/models/Team";
 import { championName } from "../../utils/i18n";
+import { formatRiskRating } from "../../utils/rating";
+import { tooltip } from "../../directives/tooltip";
+// eslint-disable-next-line
+tooltip;
+
+const DRAFT_TABLE_SORTING_KEY = "draftgap-draft-table-sorting";
+
+// Remember the chosen sort column (e.g. Blind) between drafts and app restarts.
+function loadDraftTableSorting(): SortingState {
+    try {
+        return JSON.parse(
+            localStorage.getItem(DRAFT_TABLE_SORTING_KEY) || "[]",
+        );
+    } catch {
+        return [];
+    }
+}
+
+function saveDraftTableSorting(sorting: SortingState) {
+    try {
+        localStorage.setItem(DRAFT_TABLE_SORTING_KEY, JSON.stringify(sorting));
+    } catch {
+        // Sorting is a convenience; losing it is fine.
+    }
+}
 
 export default function DraftTable() {
     const { dataset } = useDataset();
@@ -47,6 +79,11 @@ export default function DraftTable() {
         selection.team === "opponent"
             ? opponentSuggestions()
             : allySuggestions();
+
+    // Your pool says nothing about what the opponents will pick, so pool-only mode leaves their suggestions unfiltered.
+    const favouriteFilterActive = () =>
+        favouriteFilter() &&
+        !(config.poolOnlyMode && selection.team === "opponent");
 
     const ownsChampion = (championKey: string) =>
         // If we don't have owned champions, we are not logged in, so we own all champions.
@@ -81,7 +118,7 @@ export default function DraftTable() {
             filtered = filtered.filter((s) => s.role === roleFilter());
         }
 
-        if (favouriteFilter()) {
+        if (favouriteFilterActive()) {
             filtered = filtered.filter((s) =>
                 isFavourite(s.championKey, s.role),
             );
@@ -200,8 +237,8 @@ export default function DraftTable() {
                         path={star}
                         class="w-6 inline group-hover:opacity-80 transition duration-200 ease-out"
                         classList={{
-                            "opacity-50": !favouriteFilter(),
-                            "opacity-100!": favouriteFilter(),
+                            "opacity-50": !favouriteFilterActive(),
+                            "opacity-100!": favouriteFilterActive(),
                         }}
                     />
                 </button>
@@ -314,6 +351,50 @@ export default function DraftTable() {
             ),
         },
         {
+            id: "risk",
+            header: () => (
+                <span
+                    // @ts-ignore
+                    use:tooltip={{
+                        content:
+                            "How much the winrate can swing depending on who picks into the enemy's open roles (one standard deviation). Lower is a safer blind pick.",
+                    }}
+                >
+                    Risk
+                </span>
+            ),
+            accessorFn: (suggestion) => suggestion.blindRisk.riskRating,
+            cell: (info) => (
+                <div
+                    class="flex justify-end text-neutral-400"
+                    style={{ "font-variant-numeric": "tabular-nums" }}
+                >
+                    ±{formatRiskRating(info.getValue<number>())}
+                </div>
+            ),
+            sortDescFirst: false,
+        },
+        {
+            id: "safe",
+            header: () => (
+                <span
+                    // @ts-ignore
+                    use:tooltip={{
+                        content:
+                            "How good a blind pick this is: the winrate you can expect even if the enemy's open picks go somewhat against you (winrate minus a penalty for risk, adjusted for counters already picked or banned). Highest = best blind pick. Equals Winrate once every enemy is known. Set the penalty with Blind-pick caution in settings.",
+                    }}
+                >
+                    Blind
+                </span>
+            ),
+            accessorFn: (suggestion) => suggestion.safeRating,
+            cell: (info) => (
+                <div class="flex justify-end">
+                    <RatingText rating={info.getValue<number>()} />
+                </div>
+            ),
+        },
+        {
             id: "actions",
             cell: (info) => (
                 <button
@@ -337,7 +418,10 @@ export default function DraftTable() {
         },
     ];
 
-    const [sorting, setSorting] = createSignal<SortingState>([]);
+    const [sorting, setSorting] = createSignal<SortingState>(
+        loadDraftTableSorting(),
+    );
+    createEffect(() => saveDraftTableSorting(sorting()));
     const table = createSolidTable({
         get data() {
             return filteredSuggestions();

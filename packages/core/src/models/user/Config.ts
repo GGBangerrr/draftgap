@@ -1,3 +1,4 @@
+import { BlindPickCaution } from "../../risk/blind-pick-caution";
 import { RiskLevel } from "../../risk/risk-level";
 
 export type StatsSite = "op.gg" | "u.gg" | "lolalytics";
@@ -15,9 +16,11 @@ export type DraftGapConfig = {
     ignoreChampionWinrates: boolean;
     riskLevel: RiskLevel;
     minGames: number;
+    blindPickCaution: BlindPickCaution;
 
     // DRAFT SUGGESTIONS
     showFavouritesAtTop: boolean;
+    poolOnlyMode: boolean;
     banPlacement: DraftTablePlacement;
     unownedPlacement: DraftTablePlacement;
     showAdvancedWinrates: boolean;

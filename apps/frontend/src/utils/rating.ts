@@ -4,6 +4,17 @@ export function formatRating(rating: number): string {
     return formatPercentage(ratingToWinrate(rating));
 }
 
+// Express a rating spread as winrate points around 50%.
+export function formatRiskRating(riskRating: number) {
+    return formatPercentage(ratingToWinrate(riskRating) - 0.5, 1);
+}
+
+// Express a rating difference as signed winrate points, e.g. +1.2.
+export function formatRatingDelta(rating: number) {
+    const delta = formatPercentage(ratingToWinrate(rating) - 0.5, 1);
+    return rating >= 0 ? `+${delta}` : delta;
+}
+
 export function formatPercentage(
     percentage: number,
     maxDecimals = 2,

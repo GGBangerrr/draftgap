@@ -16,9 +16,11 @@ const DEFAULT_CONFIG: DraftGapConfig = {
     ignoreChampionWinrates: false,
     riskLevel: "medium",
     minGames: 1000,
+    blindPickCaution: "medium",
 
     // UI
     showFavouritesAtTop: false,
+    poolOnlyMode: false,
     banPlacement: "bottom",
     unownedPlacement: "bottom",
     showAdvancedWinrates: false,
