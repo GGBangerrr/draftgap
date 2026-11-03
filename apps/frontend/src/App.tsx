@@ -15,6 +15,7 @@ import { TeamSelector } from "./components/draft/TeamSelector";
 import { TeamSidebar } from "./components/draft/TeamSidebar";
 import { cog_6Tooth } from "solid-heroicons/solid";
 import AnalysisView from "./components/views/analysis/AnalysisView";
+import PoolView from "./components/views/pool/PoolView";
 import { LolClientStatusBadge } from "./components/draft/LolClientStatusBadge";
 import { useLolClient } from "./contexts/LolClientContext";
 import { Badge } from "./components/common/Badge";
@@ -122,6 +123,10 @@ const App: Component = () => {
                                             label: "Draft Analysis",
                                             value: "analysis",
                                         },
+                                        {
+                                            label: "Pool",
+                                            value: "pool",
+                                        },
                                         ...(config.enableBetaFeatures
                                             ? ([
                                                   {
@@ -178,6 +183,13 @@ const App: Component = () => {
                                     when={currentDraftView().type === "builds"}
                                 >
                                     <BuildsView />
+                                </Match>
+                                <Match
+                                    when={currentDraftView().type === "pool"}
+                                >
+                                    <div class="py-5 px-4 xl:px-8 h-full overflow-y-auto">
+                                        <PoolView />
+                                    </div>
                                 </Match>
                             </Switch>
                         </div>

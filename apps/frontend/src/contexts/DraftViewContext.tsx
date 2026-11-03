@@ -10,6 +10,9 @@ type DraftView =
       }
     | {
           type: "builds";
+      }
+    | {
+          type: "pool";
       };
 
 function createDraftViewContext() {
