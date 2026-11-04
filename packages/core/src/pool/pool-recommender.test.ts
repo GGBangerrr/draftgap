@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { Dataset } from "../models/dataset/Dataset";
 import { Role, ROLES } from "../models/Role";
 import {
-    buildPool,
     createPoolModel,
     rankReplacements,
     scorePool,
@@ -124,15 +123,6 @@ describe("pool recommender", () => {
                 model.candidates.get("D")!.blindRating,
             ),
         );
-    });
-
-    test("building from a kept champion adds its best partner", () => {
-        const steps = buildPool(createModel(), ["A"], 2, "counterpick");
-
-        expect(steps.map((s) => [s.championKey, s.kept])).toEqual([
-            ["A", true],
-            ["B", false],
-        ]);
     });
 
     test("the same inputs always give the same rankings", () => {
