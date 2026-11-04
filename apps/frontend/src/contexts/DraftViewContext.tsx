@@ -13,6 +13,9 @@ type DraftView =
       }
     | {
           type: "pool";
+      }
+    | {
+          type: "games";
       };
 
 function createDraftViewContext() {

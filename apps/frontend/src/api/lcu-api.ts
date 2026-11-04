@@ -24,3 +24,19 @@ export async function getGridChampions(): Promise<LolChampSelectGridChampions | 
 export async function getPickableChampionIds(): Promise<number[] | null> {
     return (await invoke("get_pickable_champion_ids")) as number[] | null;
 }
+
+// Only the parts of /lol-gameflow/v1/session the game history uses.
+export type LolGameflowSession = {
+    phase: string;
+    gameData?: {
+        gameId?: number;
+        queue?: {
+            id?: number;
+            description?: string;
+        };
+    };
+};
+
+export async function getGameflowSession(): Promise<LolGameflowSession | null> {
+    return (await invoke("get_gameflow_session")) as LolGameflowSession | null;
+}

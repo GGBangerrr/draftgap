@@ -18,6 +18,7 @@ import { DraftAnalysisProvider } from "./contexts/DraftAnalysisContext";
 import { DatasetProvider } from "./contexts/DatasetContext";
 import { DraftFiltersProvider } from "./contexts/DraftFiltersContext";
 import { ExtraDraftAnalysisProvider } from "./contexts/ExtraDraftAnalysisContext";
+import { GameHistoryProvider } from "./contexts/GameHistoryContext";
 
 setupMobileVH();
 setupAnalytics();
@@ -38,7 +39,9 @@ render(
                                             <DraftSuggestionsProvider>
                                                 <BuildProvider>
                                                     <LolClientProvider>
-                                                        <App />
+                                                        <GameHistoryProvider>
+                                                            <App />
+                                                        </GameHistoryProvider>
                                                         <Toaster
                                                             position="bottom-right"
                                                             toastOptions={{

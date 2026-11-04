@@ -9,6 +9,7 @@ use reqwest::Client;
 use serde::Serialize;
 use serde_json::Value;
 use tauri::async_runtime::Mutex;
+use tauri::Manager;
 
 struct AppState {
     lcu_data: Mutex<Option<LcuData>>,
@@ -168,6 +169,45 @@ async fn get_pickable_champion_ids(state: tauri::State<'_, AppState>) -> Result<
     get_lcu_response(&state, "lol-champ-select/v1/pickable-champion-ids").await
 }
 
+#[tauri::command]
+async fn get_gameflow_session(state: tauri::State<'_, AppState>) -> Result<Value, String> {
+    get_lcu_response(&state, "lol-gameflow/v1/session").await
+}
+
+const GAME_HISTORY_FILE: &str = "game-history.json";
+
+fn game_history_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("Could not find app data dir: {e}"))?;
+    Ok(dir.join(GAME_HISTORY_FILE))
+}
+
+#[tauri::command]
+fn load_game_history(app: tauri::AppHandle) -> Result<String, String> {
+    let path = game_history_path(&app)?;
+    if !path.exists() {
+        return Ok("[]".to_owned());
+    }
+    std::fs::read_to_string(&path).map_err(|e| format!("Could not read game history: {e}"))
+}
+
+#[tauri::command]
+fn save_game_history(app: tauri::AppHandle, contents: String) -> Result<(), String> {
+    let path = game_history_path(&app)?;
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)
+            .map_err(|e| format!("Could not create app data dir: {e}"))?;
+    }
+
+    // Write to a temporary file first so a crash mid-write can't corrupt the history.
+    let tmp_path = path.with_extension("json.tmp");
+    std::fs::write(&tmp_path, contents)
+        .map_err(|e| format!("Could not write game history: {e}"))?;
+    std::fs::rename(&tmp_path, &path).map_err(|e| format!("Could not save game history: {e}"))
+}
+
 fn main() {
     let client = Client::builder()
         .danger_accept_invalid_certs(true)
@@ -189,7 +229,10 @@ fn main() {
             get_champ_select_session,
             get_current_summoner,
             get_grid_champions,
-            get_pickable_champion_ids
+            get_pickable_champion_ids,
+            get_gameflow_session,
+            load_game_history,
+            save_game_history
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

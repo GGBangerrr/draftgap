@@ -16,6 +16,8 @@ import { TeamSidebar } from "./components/draft/TeamSidebar";
 import { cog_6Tooth } from "solid-heroicons/solid";
 import AnalysisView from "./components/views/analysis/AnalysisView";
 import PoolView from "./components/views/pool/PoolView";
+import GamesView from "./components/views/games/GamesView";
+import { GameResultDialog } from "./components/dialogs/GameResultDialog";
 import { LolClientStatusBadge } from "./components/draft/LolClientStatusBadge";
 import { useLolClient } from "./contexts/LolClientContext";
 import { Badge } from "./components/common/Badge";
@@ -127,6 +129,10 @@ const App: Component = () => {
                                             label: "Pool",
                                             value: "pool",
                                         },
+                                        {
+                                            label: "Games",
+                                            value: "games",
+                                        },
                                         ...(config.enableBetaFeatures
                                             ? ([
                                                   {
@@ -191,6 +197,13 @@ const App: Component = () => {
                                         <PoolView />
                                     </div>
                                 </Match>
+                                <Match
+                                    when={currentDraftView().type === "games"}
+                                >
+                                    <div class="py-5 px-4 xl:px-8 h-full overflow-y-auto">
+                                        <GamesView />
+                                    </div>
+                                </Match>
                             </Switch>
                         </div>
                     </Match>
@@ -215,6 +228,7 @@ const App: Component = () => {
             }}
         >
             <UpdateDialog />
+            <GameResultDialog />
             <Dialog open={showFAQ()} onOpenChange={setShowFAQ}>
                 <FAQDialog />
             </Dialog>

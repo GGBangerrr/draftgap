@@ -1,4 +1,4 @@
-import { For, JSX, Show, createMemo, createSignal } from "solid-js";
+import { For, Show, createMemo, createSignal } from "solid-js";
 import { Role, ROLES, displayNameByRole } from "@draftgap/core/src/models/Role";
 import { PoolColumn, analyzePool } from "@draftgap/core/src/pool/pool-analysis";
 import { priorGamesByRiskLevel } from "@draftgap/core/src/risk/risk-level";
@@ -9,12 +9,9 @@ import { Panel, PanelHeader } from "../../common/Panel";
 import ChampionCell from "../../common/ChampionCell";
 import { ChampionIcon } from "../../icons/ChampionIcon";
 import { RoleIcon } from "../../icons/roles/RoleIcon";
-import {
-    formatPercentage,
-    formatRatingDelta,
-    formatRiskRating,
-    getRatingClass,
-} from "../../../utils/rating";
+import { DeltaText } from "../../common/DeltaText";
+import { SummaryStat } from "../../common/SummaryStat";
+import { formatPercentage, formatRiskRating } from "../../../utils/rating";
 import { cn } from "../../../utils/style";
 import { tooltip } from "../../../directives/tooltip";
 // eslint-disable-next-line
@@ -25,41 +22,6 @@ const LOW_SAMPLE_GAMES = 1000;
 
 type TableType = "matchups" | "synergies";
 type ColumnFilter = "lane" | "all" | Role;
-
-function SummaryStat(props: {
-    title: string;
-    value: JSX.Element;
-    detail?: JSX.Element;
-    tooltip: string;
-}) {
-    // Directives only work on native elements, so this mirrors Panel's styling on a div.
-    return (
-        <div
-            class="rounded-md bg-primary p-4"
-            // @ts-ignore
-            use:tooltip={{ content: props.tooltip }}
-        >
-            <div class="text-lg text-neutral-400 uppercase">{props.title}</div>
-            <div class="text-3xl -mt-1">{props.value}</div>
-            <Show when={props.detail}>
-                <div class="text-sm text-neutral-400 uppercase">
-                    {props.detail}
-                </div>
-            </Show>
-        </div>
-    );
-}
-
-function DeltaText(props: { rating: number; class?: string }) {
-    return (
-        <span
-            class={cn(getRatingClass(props.rating), props.class)}
-            style={{ "font-variant-numeric": "tabular-nums" }}
-        >
-            {formatRatingDelta(props.rating)}
-        </span>
-    );
-}
 
 export default function PoolView() {
     const { favouritePicks, config } = useUser();
