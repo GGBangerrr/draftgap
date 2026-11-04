@@ -361,7 +361,7 @@ export default function DraftTable() {
                     // @ts-ignore
                     use:tooltip={{
                         content:
-                            "How this champion does against the enemies already picked in your lane (bot and support count as one lane), in winrate points vs expected. Empty until your lane opponent is picked.",
+                            "How this champion does in lane, in winrate points vs expected: its matchups against the enemies already picked in its lane, plus, in bot lane, its synergy with your ADC or support. Empty until a lane opponent or bot lane partner is picked.",
                     }}
                 >
                     Lane

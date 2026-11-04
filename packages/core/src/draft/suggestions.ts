@@ -11,7 +11,7 @@ export interface Suggestion {
     role: Role;
     draftResult: DraftResult;
     blindRisk: BlindRiskResult;
-    // Summed matchup rating against the enemies already picked in your lane; undefined until one is picked.
+    // Matchups against the enemies already picked in your lane, plus synergy with your bot lane partner; undefined until either is picked.
     laneRating: number | undefined;
     // Draft rating adjusted for champions removed from the open enemy roles, minus a penalty for how polarized those matchups are.
     safeRating: number;
@@ -33,9 +33,22 @@ export function getLaneRating(
             m.roleA === role &&
             isInLane(role, m.roleB),
     );
-    if (!laneMatchups.length) return undefined;
+    // Only bot lane has an ally in the same lane; duos list each pair once, in either order.
+    const laneDuos = draftResult.allyDuoRating.duoResults.filter(
+        (d) =>
+            (d.championKeyA === championKey &&
+                d.roleA === role &&
+                isInLane(role, d.roleB)) ||
+            (d.championKeyB === championKey &&
+                d.roleB === role &&
+                isInLane(role, d.roleA)),
+    );
+    if (!laneMatchups.length && !laneDuos.length) return undefined;
 
-    return laneMatchups.reduce((sum, m) => sum + m.rating, 0);
+    return [...laneMatchups, ...laneDuos].reduce(
+        (sum, result) => sum + result.rating,
+        0,
+    );
 }
 
 export function getSuggestions(
