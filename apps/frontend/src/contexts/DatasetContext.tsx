@@ -12,8 +12,11 @@ import {
 
 const fetchDataset = async (name: "30-days" | "current-patch") => {
     try {
+        // The bucket sends no Cache-Control, so without this the webview may reuse a day-old copy for hours.
+        // "no-cache" still uses the cache, but checks the ETag first and only downloads when the file changed.
         const response = await fetch(
             `https://bucket.draftgap.com/datasets/v${DATASET_VERSION}/${name}.json`,
+            { cache: "no-cache" },
         );
         const json = await response.json();
         return json as Dataset;
