@@ -10,6 +10,7 @@ import ChampionCell from "../../common/ChampionCell";
 import { ChampionIcon } from "../../icons/ChampionIcon";
 import { RoleIcon } from "../../icons/roles/RoleIcon";
 import { DeltaText } from "../../common/DeltaText";
+import { PoolRecommender } from "./PoolRecommender";
 import { SummaryStat } from "../../common/SummaryStat";
 import { formatPercentage, formatRiskRating } from "../../../utils/rating";
 import { cn } from "../../../utils/style";
@@ -383,6 +384,8 @@ export default function PoolView() {
                                     </Show>
                                 </Panel>
                             </div>
+
+                            <PoolRecommender role={role()!} pool={pool()} />
 
                             <Panel>
                                 <div class="flex flex-wrap items-center gap-4 mb-4">
