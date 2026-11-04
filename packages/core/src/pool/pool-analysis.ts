@@ -2,7 +2,10 @@ import { Dataset } from "../models/dataset/Dataset";
 import { Role, ROLES } from "../models/Role";
 import { analyzeDuo, analyzeMatchup } from "../draft/analysis";
 import { analyzeBlindRisk, getRolePool } from "../draft/blind-risk";
+import { isInLane } from "../draft/lane";
 import { winrateToRating } from "../rating/ratings";
+
+export { isInLane };
 
 const MAX_BANS = 5;
 
@@ -66,13 +69,6 @@ export type PoolAnalysis = {
     champions: PoolChampionSummary[];
     bans: PoolBan[];
 };
-
-export function isInLane(role: Role, otherRole: Role) {
-    if (role === otherRole) return true;
-
-    const botLane: Role[] = [Role.Bottom, Role.Support];
-    return botLane.includes(role) && botLane.includes(otherRole);
-}
 
 function createColumn(
     role: Role,

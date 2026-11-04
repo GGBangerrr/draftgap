@@ -3,6 +3,7 @@ import { Dataset } from "../models/dataset/Dataset";
 import { priorGamesByRiskLevel } from "../risk/risk-level";
 import { DraftResult, AnalyzeDraftConfig, analyzeDraft } from "./analysis";
 import { BlindRiskResult, analyzeBlindRisk } from "./blind-risk";
+import { isInLane } from "./lane";
 import { getStats } from "./utils";
 
 export interface Suggestion {
@@ -10,6 +11,8 @@ export interface Suggestion {
     role: Role;
     draftResult: DraftResult;
     blindRisk: BlindRiskResult;
+    // Summed matchup rating against the enemies already picked in your lane; undefined until one is picked.
+    laneRating: number | undefined;
     // Draft rating adjusted for champions removed from the open enemy roles, minus a penalty for how polarized those matchups are.
     safeRating: number;
 }
@@ -18,6 +21,22 @@ export type SuggestionsConfig = AnalyzeDraftConfig & {
     // Standard deviations of unrevealed matchup risk to subtract from the safe rating.
     blindPickDeviations: number;
 };
+
+export function getLaneRating(
+    draftResult: DraftResult,
+    role: Role,
+    championKey: string,
+) {
+    const laneMatchups = draftResult.matchupRating.matchupResults.filter(
+        (m) =>
+            m.championKeyA === championKey &&
+            m.roleA === role &&
+            isInLane(role, m.roleB),
+    );
+    if (!laneMatchups.length) return undefined;
+
+    return laneMatchups.reduce((sum, m) => sum + m.rating, 0);
+}
 
 export function getSuggestions(
     dataset: Dataset,
@@ -77,6 +96,7 @@ export function getSuggestions(
                 role,
                 draftResult,
                 blindRisk,
+                laneRating: getLaneRating(draftResult, role, championKey),
                 safeRating:
                     draftResult.totalRating +
                     blindRisk.expectedRating -

@@ -35,7 +35,11 @@ import { Dialog } from "../common/Dialog";
 import { ChampionDraftAnalysisDialog } from "../dialogs/ChampionDraftAnalysisDialog";
 import { Team } from "@draftgap/core/src/models/Team";
 import { championName } from "../../utils/i18n";
-import { formatRiskRating } from "../../utils/rating";
+import {
+    formatRatingDelta,
+    formatRiskRating,
+    getRatingClass,
+} from "../../utils/rating";
 import { tooltip } from "../../directives/tooltip";
 // eslint-disable-next-line
 tooltip;
@@ -349,6 +353,37 @@ export default function DraftTable() {
                     <RatingText rating={info.getValue<number>()} />
                 </div>
             ),
+        },
+        {
+            id: "lane",
+            header: () => (
+                <span
+                    // @ts-ignore
+                    use:tooltip={{
+                        content:
+                            "How this champion does against the enemies already picked in your lane (bot and support count as one lane), in winrate points vs expected. Empty until your lane opponent is picked.",
+                    }}
+                >
+                    Lane
+                </span>
+            ),
+            accessorFn: (suggestion) => suggestion.laneRating,
+            cell: (info) => (
+                <div
+                    class="flex justify-end"
+                    style={{ "font-variant-numeric": "tabular-nums" }}
+                >
+                    <Show
+                        when={info.getValue<number | undefined>() !== undefined}
+                        fallback={<span class="text-neutral-600">-</span>}
+                    >
+                        <span class={getRatingClass(info.getValue<number>())}>
+                            {formatRatingDelta(info.getValue<number>())}
+                        </span>
+                    </Show>
+                </div>
+            ),
+            sortUndefined: "last",
         },
         {
             id: "risk",
