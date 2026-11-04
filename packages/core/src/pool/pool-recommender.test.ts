@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { Dataset } from "../models/dataset/Dataset";
 import { Role, ROLES } from "../models/Role";
 import {
+    compareSwap,
     createPoolModel,
+    getPoolContributions,
     rankReplacements,
     scorePool,
 } from "./pool-recommender";
@@ -123,6 +125,39 @@ describe("pool recommender", () => {
                 model.candidates.get("D")!.blindRating,
             ),
         );
+    });
+
+    test("the champion that adds nothing is the weakest link", () => {
+        // D is behind into both supports, so A and B already cover almost everything it could;
+        // it only helps in the few drafts where A or B is on the enemy team.
+        const contributions = getPoolContributions(
+            createModel(),
+            ["A", "B", "D"],
+            "counterpick",
+        );
+        const sorted = [...contributions].sort(
+            (a, b) => a.contribution - b.contribution,
+        );
+
+        expect(sorted[0].championKey).toBe("D");
+        expect(sorted[0].contribution).toBeLessThan(sorted[1].contribution / 4);
+    });
+
+    test("a substitute is ahead only when it beats the prime champion it replaced", () => {
+        const model = createModel();
+
+        // With A in the pool, C covers Y nearly as well as B, so B (the prime pick) is still ahead.
+        expect(
+            compareSwap(model, ["A", "C"], "C", "B", "counterpick"),
+        ).toBeLessThan(0);
+        // D covers nothing, so the prime pick B is far ahead of it.
+        expect(
+            compareSwap(model, ["A", "D"], "D", "B", "counterpick"),
+        ).toBeLessThan(compareSwap(model, ["A", "C"], "C", "B", "counterpick"));
+        // Swapped the other way round, C would be behind B.
+        expect(
+            compareSwap(model, ["A", "B"], "B", "C", "counterpick"),
+        ).toBeGreaterThan(0);
     });
 
     test("the same inputs always give the same rankings", () => {

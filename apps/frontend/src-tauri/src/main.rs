@@ -175,37 +175,58 @@ async fn get_gameflow_session(state: tauri::State<'_, AppState>) -> Result<Value
 }
 
 const GAME_HISTORY_FILE: &str = "game-history.json";
+// Favourites and config; WebView2 can drop recent localStorage writes when the app closes.
+const USER_SETTINGS_FILE: &str = "user-settings.json";
 
-fn game_history_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+fn app_data_path(app: &tauri::AppHandle, file: &str) -> Result<std::path::PathBuf, String> {
     let dir = app
         .path()
         .app_data_dir()
         .map_err(|e| format!("Could not find app data dir: {e}"))?;
-    Ok(dir.join(GAME_HISTORY_FILE))
+    Ok(dir.join(file))
 }
 
-#[tauri::command]
-fn load_game_history(app: tauri::AppHandle) -> Result<String, String> {
-    let path = game_history_path(&app)?;
+fn read_app_file(app: &tauri::AppHandle, file: &str) -> Result<Option<String>, String> {
+    let path = app_data_path(app, file)?;
     if !path.exists() {
-        return Ok("[]".to_owned());
+        return Ok(None);
     }
-    std::fs::read_to_string(&path).map_err(|e| format!("Could not read game history: {e}"))
+    std::fs::read_to_string(&path)
+        .map(Some)
+        .map_err(|e| format!("Could not read {file}: {e}"))
 }
 
-#[tauri::command]
-fn save_game_history(app: tauri::AppHandle, contents: String) -> Result<(), String> {
-    let path = game_history_path(&app)?;
+fn write_app_file(app: &tauri::AppHandle, file: &str, contents: String) -> Result<(), String> {
+    let path = app_data_path(app, file)?;
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)
             .map_err(|e| format!("Could not create app data dir: {e}"))?;
     }
 
-    // Write to a temporary file first so a crash mid-write can't corrupt the history.
+    // Write to a temporary file first so a crash mid-write can't corrupt the file.
     let tmp_path = path.with_extension("json.tmp");
-    std::fs::write(&tmp_path, contents)
-        .map_err(|e| format!("Could not write game history: {e}"))?;
-    std::fs::rename(&tmp_path, &path).map_err(|e| format!("Could not save game history: {e}"))
+    std::fs::write(&tmp_path, contents).map_err(|e| format!("Could not write {file}: {e}"))?;
+    std::fs::rename(&tmp_path, &path).map_err(|e| format!("Could not save {file}: {e}"))
+}
+
+#[tauri::command]
+fn load_game_history(app: tauri::AppHandle) -> Result<String, String> {
+    Ok(read_app_file(&app, GAME_HISTORY_FILE)?.unwrap_or_else(|| "[]".to_owned()))
+}
+
+#[tauri::command]
+fn save_game_history(app: tauri::AppHandle, contents: String) -> Result<(), String> {
+    write_app_file(&app, GAME_HISTORY_FILE, contents)
+}
+
+#[tauri::command]
+fn load_user_settings(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    read_app_file(&app, USER_SETTINGS_FILE)
+}
+
+#[tauri::command]
+fn save_user_settings(app: tauri::AppHandle, contents: String) -> Result<(), String> {
+    write_app_file(&app, USER_SETTINGS_FILE, contents)
 }
 
 fn main() {
@@ -232,7 +253,9 @@ fn main() {
             get_pickable_champion_ids,
             get_gameflow_session,
             load_game_history,
-            save_game_history
+            save_game_history,
+            load_user_settings,
+            save_user_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -279,3 +279,45 @@ export function rankReplacements(
         })
         .sort((a, b) => b.score.totalRating - a.score.totalRating);
 }
+
+// How far a substitute is ahead of the prime champion it replaced, for the goal; negative means swap back.
+export function compareSwap(
+    model: PoolModel,
+    pool: string[],
+    substitute: string,
+    prime: string,
+    goal: PoolGoal,
+) {
+    const withPrime = [...pool.filter((key) => key !== substitute), prime];
+    return (
+        scorePool(model, pool, goal).totalRating -
+        scorePool(model, withPrime, goal).totalRating
+    );
+}
+
+export type PoolContribution = {
+    championKey: string;
+    // How much the pool's rating (for the goal) drops without this champion; the smallest is the weakest link.
+    contribution: number;
+};
+
+export function getPoolContributions(
+    model: PoolModel,
+    pool: string[],
+    goal: PoolGoal,
+): PoolContribution[] {
+    const total = scorePool(model, pool, goal).totalRating;
+
+    return pool
+        .filter((key) => model.candidates.has(key))
+        .map((championKey) => ({
+            championKey,
+            contribution:
+                total -
+                scorePool(
+                    model,
+                    pool.filter((key) => key !== championKey),
+                    goal,
+                ).totalRating,
+        }));
+}
